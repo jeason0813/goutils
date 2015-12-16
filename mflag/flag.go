@@ -545,7 +545,7 @@ func isZeroValue(value string) bool {
 // otherwise, the default values of all defined flags in the set.
 func (fs *FlagSet) PrintDefaults() {
 	writer := tabwriter.NewWriter(fs.Out(), 20, 1, 3, ' ', 0)
-	home := homepath()
+	home := homepath("")
 
 	// Don't substitute when HOME is /
 	if runtime.GOOS != "windows" && home == "/" {
@@ -566,13 +566,11 @@ func (fs *FlagSet) PrintDefaults() {
 		}
 		if len(names) > 0 && len(flag.Usage) > 0 {
 			val := flag.DefValue
-
+			short := "~"
 			if home != "" && strings.HasPrefix(val, home) {
-  			if runtime.GOOS == "windows" {
-      		short := "%USERPROFILE%" // be careful while using in format functions
-      	} else {
-      	  short := "~"
-      	}
+				if runtime.GOOS == "windows" {
+					short := "%USERPROFILE%" // be careful while using in format functions
+				}
 				val = short + val[len(home):]
 			}
 
