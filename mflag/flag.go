@@ -569,7 +569,7 @@ func (fs *FlagSet) PrintDefaults() {
 			short := "~"
 			if home != "" && strings.HasPrefix(val, home) {
 				if runtime.GOOS == "windows" {
-					short := "%USERPROFILE%" // be careful while using in format functions
+					short = "%USERPROFILE%" // be careful while using in format functions
 				}
 				val = short + val[len(home):]
 			}
