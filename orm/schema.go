@@ -98,7 +98,7 @@ func (s *Schema) With(record interface{}) error {
 				c.zone = zone
 			}
 		}
-		field := tag.Get("field")
+		field := tag.Get("json")
 		if field != "" {
 			s.fields[col.Name] = field
 		} else {
@@ -118,6 +118,7 @@ func (s *Schema) Columns() map[string]*column {
 
 func (s *Schema) SetAutoIncrement(field string) *Schema {
 	s.AutoIncrement = field
+	s.Primary = []string{field}
 	return s
 }
 

@@ -110,7 +110,8 @@ func (t *event) read(event string, params ...interface{}) (reflect.Value, []refl
 		return reflect.Value{}, nil, errors.New("no task found for event")
 	}
 	f := reflect.ValueOf(task)
-	if len(params) != f.Type().NumIn() {
+	ft := f.Type()
+	if !ft.IsVariadic() && len(params) != ft.NumIn() {
 		return reflect.Value{}, nil, errors.New("parameter mismatched")
 	}
 	in := make([]reflect.Value, len(params))

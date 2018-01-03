@@ -6,7 +6,15 @@ import (
 	"time"
 )
 
-type Executor struct {
+type Executor interface {
+	Conn(conn *sql.DB)
+	ConnWithDriver(conn *sql.DB, driver string)
+	Query() Query
+	Session(f func(conn Conn) error) error
+	Begin() (Transaction, error)
+}
+
+type executor struct {
 	query  *sync.Pool
 	conn   *sql.DB
 	driver string
@@ -17,27 +25,27 @@ type Executor struct {
 
 var defaultExecutor = NewExecutor()
 
-func DefaultExecutor() *Executor {
+func DefaultExecutor() Executor {
 	return defaultExecutor
 }
 
-func NewExecutor() *Executor {
-	executor := &Executor{
+func NewExecutor() Executor {
+	e := &executor{
 		query:      &sync.Pool{},
 		TZLocation: time.Local,
 	}
-	executor.query.New = func() interface{} {
-		return newQuery(executor)
+	e.query.New = func() interface{} {
+		return newQuery(e)
 	}
-	return executor
+	return e
 }
 
-func (e *Executor) Conn(conn *sql.DB) {
+func (e *executor) Conn(conn *sql.DB) {
 	e.conn = conn
 	e.DatabaseTZ = time.Local
 }
 
-func (e *Executor) ConnWithDriver(conn *sql.DB, driver string) {
+func (e *executor) ConnWithDriver(conn *sql.DB, driver string) {
 	e.conn = conn
 	e.driver = driver
 	if driver == SQLITE {
@@ -48,17 +56,17 @@ func (e *Executor) ConnWithDriver(conn *sql.DB, driver string) {
 
 }
 
-func (e *Executor) Query() Query {
+func (e *executor) Query() Query {
 	return e.getQuery()
 }
 
-func (e *Executor) getQuery() *query {
+func (e *executor) getQuery() *query {
 	query := e.query.Get().(*query)
 	query.Session(e.conn)
 	return query
 }
 
-func (e *Executor) Session(f func(conn Conn) error) error {
+func (e *executor) Session(f func(conn Conn) error) error {
 	tx, err := e.conn.Begin()
 	defer func() {
 		if err := recover(); err != nil {
@@ -78,6 +86,6 @@ func (e *Executor) Session(f func(conn Conn) error) error {
 	}
 }
 
-func (e *Executor) Begin() (Transaction, error) {
+func (e *executor) Begin() (Transaction, error) {
 	return e.conn.Begin()
 }
