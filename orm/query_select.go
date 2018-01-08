@@ -76,14 +76,6 @@ func (q *query) OneInterface() (map[string]interface{}, error) {
 
 func (q *query) Find(result interface{}) error {
 	defer q.release()
-	s, err := NewSchema(result)
-	if err != nil {
-		return err
-	}
-	q.schema = s
-	if q.i == nil {
-		return errors.New("need schema")
-	}
 	beanValue := reflect.ValueOf(result)
 	if beanValue.Kind() != reflect.Ptr {
 		return errors.New("needs a pointer to a value")
@@ -93,11 +85,22 @@ func (q *query) Find(result interface{}) error {
 	one := false
 	value := reflect.ValueOf(result)
 	valueE := value.Elem()
+
+	var schema *Schema
+	var err error
 	switch valueE.Kind() {
 	case reflect.Struct:
 		q.Limit(0, 1)
 		one = true
+		schema, err = NewSchema(result)
+		if err != nil {
+			return err
+		}
 	case reflect.Slice:
+		schema, err = NewSchema(valueE.Index(0).Interface())
+		if err != nil {
+			return err
+		}
 		break
 	default:
 		return errors.New("only type:struct or slice")
@@ -110,12 +113,12 @@ func (q *query) Find(result interface{}) error {
 	columns, err := rows.Columns()
 	if one {
 		rows.Next()
-		return scanInterface(q.executor, rows, q.schema, columns, &value)
+		return scanInterface(q.executor, rows, schema, columns, &value)
 	} else {
 		i := 0
 		for rows.Next() {
-			r := value.Index(i)
-			err := scanInterface(q.executor, rows, q.schema, columns, &r)
+			r := valueE.Index(i)
+			err := scanInterface(q.executor, rows, schema, columns, &r)
 			if err != nil {
 				return err
 			}
@@ -153,12 +156,13 @@ func (q *query) selectInline() (*sql.Rows, error) {
 	if q.table == "" {
 		return nil, errors.New("table is empty")
 	}
-	var s = "SELECT %v FROM %v WHERE %v"
+	var s = "SELECT %s FROM %s WHERE %s"
+	field, err := q.getField()
 	where, args, err := q.getWhere()
 	if err != nil {
 		return nil, err
 	}
-	return q.query(fmt.Sprint(s, q.table, q.table, where), args)
+	return q.query(fmt.Sprintf(s, field, q.table, where), args...)
 }
 
 func value2String(rawValue *reflect.Value) (str string, err error) {

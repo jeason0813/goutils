@@ -108,7 +108,7 @@ func (q *query) inlineInsert(fields []string, data []interface{}) (sql.Result, e
 		return nil, err
 	}
 
-	return q.exec(fmt.Sprint(s, q.table, fieldStr, valueStr), data)
+	return q.exec(fmt.Sprint(s, q.table, fieldStr, valueStr), data...)
 }
 
 func (q *query) inlineInsertBatch(fields []string, data ...[]interface{}) (sql.Result, error) {
@@ -130,7 +130,7 @@ func (q *query) inlineInsertBatch(fields []string, data ...[]interface{}) (sql.R
 			valueStr += ","
 		}
 	}
-	return q.exec(fmt.Sprint(s, q.table, fieldStr, valueStr), args)
+	return q.exec(fmt.Sprint(s, q.table, fieldStr, valueStr), args...)
 }
 
 func (q *query) inlineUpdate(fields []string, data []interface{}) (sql.Result, error) {
@@ -147,7 +147,7 @@ func (q *query) inlineUpdate(fields []string, data []interface{}) (sql.Result, e
 	if err != nil {
 		return nil, err
 	}
-	return q.exec(fmt.Sprint(s, q.table, setSql, where), append(data, args...))
+	return q.exec(fmt.Sprint(s, q.table, setSql, where), append(data, args...)...)
 }
 
 func (q *query) getSet(fields []string, data []interface{}) (string, error) {

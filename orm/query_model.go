@@ -29,7 +29,7 @@ func (q *query) Get() (interface{}, error) {
 	}
 	q.Limit(0, 1)
 
-	value := reflect.New(q.model.schema.schemaType).Interface()
+	value := reflect.New(q.model.schema.schemaType)
 
 	rows, err := q.selectInline()
 	if err != nil {
@@ -41,8 +41,8 @@ func (q *query) Get() (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		err = scanInterface(q.executor, rows, q.schema, columns, value)
-		return value, err
+		err = scanInterface(q.executor, rows, q.schema, columns, &value)
+		return value.Interface(), err
 	} else {
 		return nil, errors.New("next is error")
 	}
@@ -123,7 +123,7 @@ func (q *query) modelInsert(records ...map[string]interface{}) ([]string, [][]in
 }
 
 func formatData(schema *Schema, records ...map[string]interface{}) ([]string, [][]interface{}, error) {
-	columns := schema.Columns()
+	columns := schema.columns
 	fields := schema.fields
 	if len(records) == 0 {
 		return []string{}, [][]interface{}{}, nil
@@ -131,13 +131,13 @@ func formatData(schema *Schema, records ...map[string]interface{}) ([]string, []
 	fieldsSlice := make([]string, len(fields))
 	originSlice := make([]string, len(fields))
 	for f, ff := range fields {
-		fieldsSlice = append(fieldsSlice, ff)
 		originSlice = append(originSlice, f)
+		fieldsSlice = append(fieldsSlice, ff)
 	}
 	d := make([][]interface{}, len(fieldsSlice))
 	for _, v := range records {
 		g := make([]interface{}, len(columns))
-		for _, f := range originSlice {
+		for _, f := range fieldsSlice {
 			c, ok := v[f]
 			if !ok {
 				c = columns[f].d
@@ -157,11 +157,13 @@ func interface2map(schema *Schema, record interface{}) (map[string]interface{}, 
 		return nil, errors.New("a pointer to a pointer is not allowed")
 	}
 	data := map[string]interface{}{}
-	columns := schema.Columns()
+	columns := schema.columns
+	fields := schema.fields
 	recordValue := reflect.ValueOf(record).Elem()
-	for name, col := range columns {
+	for name, colName := range fields {
 		var val interface{}
 		value := recordValue.FieldByName(name)
+		col := columns[colName]
 		if value.CanAddr() {
 			if structConvert, ok := value.Addr().Interface().(Conversion); ok {
 				data, err := structConvert.ToDB()

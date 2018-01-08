@@ -23,7 +23,7 @@ type executor struct {
 	DatabaseTZ *time.Location // The timezone of the database
 }
 
-var defaultExecutor = NewExecutor()
+var defaultExecutor = NewExecutor().(*executor)
 
 func DefaultExecutor() Executor {
 	return defaultExecutor

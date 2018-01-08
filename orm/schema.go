@@ -17,12 +17,12 @@ type Conversion interface {
 type Schema struct {
 	AutoIncrement string
 	Primary       []string
-	record        interface{}
 
 	schemaType    reflect.Type
 	schemaPtrType reflect.Type
 	columns       map[string]*column
 	fields        map[string]string
+	record        interface{}
 
 	softDelete bool
 	createTime string
@@ -51,10 +51,12 @@ func (s *Schema) Default(field string, value interface{}) *Schema {
 
 func (s *Schema) With(record interface{}) error {
 	s.fields = make(map[string]string)
+	s.columns = make(map[string]*column)
 	value := reflect.ValueOf(record)
 	if value.Kind() != reflect.Ptr || value.Elem().Kind() != reflect.Struct {
 		return errors.New("needs a Struct pointer")
 	}
+	valueE := value.Elem()
 	tp := reflect.TypeOf(record)
 	t := tp.Elem()
 	for k := 0; k < t.NumField(); k++ {
@@ -73,13 +75,23 @@ func (s *Schema) With(record interface{}) error {
 		case "updateTime":
 			s.SetUpdateTime(col.Name)
 		}
-		v := value.FieldByName(col.Name)
+		v := valueE.FieldByName(col.Name)
+		d := v.Interface()
 		_, required := tag.Lookup("required")
 		t, tset := tag.Lookup("time")
+
+		field := tag.Get("json")
+		if field != "" {
+			s.fields[col.Name] = field
+		} else {
+			s.fields[col.Name] = col.Name
+		}
+
 		c := &column{
+			col.Name,
 			col.Type,
 			v,
-			v.Interface(),
+			d,
 			tag.Get("sql"),
 			required,
 			time.UTC,
@@ -98,22 +110,12 @@ func (s *Schema) With(record interface{}) error {
 				c.zone = zone
 			}
 		}
-		field := tag.Get("json")
-		if field != "" {
-			s.fields[col.Name] = field
-		} else {
-			s.fields[col.Name] = col.Name
-		}
-		s.columns[col.Name] = c
+		s.columns[s.fields[col.Name]] = c
 	}
 	s.record = record
 	s.schemaType = t
 	s.schemaPtrType = tp
 	return nil
-}
-
-func (s *Schema) Columns() map[string]*column {
-	return s.columns
 }
 
 func (s *Schema) SetAutoIncrement(field string) *Schema {
@@ -215,6 +217,7 @@ const (
 )
 
 type column struct {
+	f        string
 	t        reflect.Type
 	v        reflect.Value
 	d        interface{}

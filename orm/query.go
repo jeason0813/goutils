@@ -33,13 +33,13 @@ type Query interface {
 }
 
 type query struct {
-	executor *Executor
+	executor *executor
 	conn     Conn
 
+	id string
+
 	model  *Model
-	id     string
 	schema *Schema
-	i      interface{}
 
 	table     string
 	fields    []string
@@ -58,7 +58,7 @@ var (
 	re, _ = regexp.Compile(`[?](\w+)`)
 )
 
-func newQuery(executor *Executor) *query {
+func newQuery(executor *executor) *query {
 	q := &query{
 		executor: executor,
 	}
@@ -92,14 +92,15 @@ func (q *query) exec(query string, args ...interface{}) (sql.Result, error) {
 	if q.err != nil {
 		return nil, q.err
 	}
-	return q.conn.Exec(query, args)
+	return q.conn.Exec(query, args...)
 }
 
 func (q *query) query(query string, args ...interface{}) (*sql.Rows, error) {
 	if q.err != nil {
 		return nil, q.err
 	}
-	return q.conn.Query(query, args)
+	fmt.Println(query, args)
+	return q.conn.Query(query, args...)
 }
 
 func (q *query) release() {
@@ -180,7 +181,7 @@ func formatTime(sqlTypeName string, t time.Time) (v interface{}) {
 	return
 }
 
-func str2Time(executor *Executor, col *column, data string) (outTime time.Time, outErr error) {
+func str2Time(executor *executor, col *column, data string) (outTime time.Time, outErr error) {
 	sdata := strings.TrimSpace(data)
 	var x time.Time
 	var err error
@@ -241,6 +242,6 @@ func str2Time(executor *Executor, col *column, data string) (outTime time.Time, 
 	outTime = x.In(executor.TZLocation)
 	return
 }
-func byte2Time(executor *Executor, col *column, data []byte) (outTime time.Time, outErr error) {
+func byte2Time(executor *executor, col *column, data []byte) (outTime time.Time, outErr error) {
 	return str2Time(executor, col, string(data))
 }

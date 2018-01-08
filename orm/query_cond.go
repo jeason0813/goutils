@@ -37,11 +37,10 @@ func (q *query) TableAlias(table string, alias string) Query {
 }
 
 func (q *query) Field(field string) Query {
-	return q.FieldAlias(field, "")
+	return q.FieldAlias("`"+field+"`", "")
 }
 
 func (q *query) FieldAlias(field string, alias string) Query {
-	field = "`" + field + "`"
 	if alias != "" {
 		field += " as " + alias
 	}
@@ -135,11 +134,14 @@ func (q *query) Sql(query string, args interface{}) Query {
 }
 
 func (q *query) getWhere() (string, []interface{}, error) {
-	var buf bytes.Buffer
 	var args []interface{}
+
+	buf := bytes.Buffer{}
 	if q.where != nil {
 		buf.WriteString(strings.Join(q.where, " AND "))
 		args = q.whereArgs
+	} else {
+		buf.WriteString("1")
 	}
 	if q.order != nil {
 		buf.WriteString(" ORDER BY ")

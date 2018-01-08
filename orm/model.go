@@ -10,12 +10,12 @@ import (
 type Model struct {
 	name     string
 	schema   *Schema
-	executor *Executor
+	executor *executor
 
 	event event.Event
 }
 
-func NewModel(name string, record interface{}, executor *Executor) (*Model, error) {
+func NewModel(name string, record interface{}, executor *executor) (*Model, error) {
 	schema, err := NewSchema(record)
 	if err != nil {
 		return nil, err
@@ -23,9 +23,9 @@ func NewModel(name string, record interface{}, executor *Executor) (*Model, erro
 	return NewModelWithSchema(name, schema, executor), nil
 }
 
-func NewModelWithSchema(name string, schema *Schema, executor *Executor) *Model {
+func NewModelWithSchema(name string, schema *Schema, executor *executor) *Model {
 	if executor == nil {
-		executor = DefaultExecutor()
+		executor = defaultExecutor
 	}
 
 	model := &Model{
