@@ -221,8 +221,7 @@ func scanStruct(executor *executor, rows *sql.Rows, schema *Schema, sqlColumns [
 		switch fieldType.Kind() {
 		case BytesType.Kind():
 			fieldValue.Set(raw)
-		case reflect.Complex64, reflect.Complex128:
-		case reflect.Slice, reflect.Array, reflect.Map:
+		case reflect.Complex64, reflect.Complex128, reflect.Slice, reflect.Array, reflect.Map:
 			bs := rawValue.([]byte)
 
 			hasAssigned = true

@@ -14,10 +14,17 @@ type Executor interface {
 	Begin() (Transaction, error)
 }
 
+type Logger interface {
+	Debugf(format string, args ...interface{})
+	Infof(format string, args ...interface{})
+	Error(args ...interface{})
+}
+
 type executor struct {
 	query  *sync.Pool
 	conn   *sql.DB
 	driver string
+	logger Logger
 
 	TZLocation *time.Location // The timezone of the application
 	DatabaseTZ *time.Location // The timezone of the database
@@ -54,6 +61,10 @@ func (e *executor) ConnWithDriver(conn *sql.DB, driver string) {
 		e.DatabaseTZ = time.Local
 	}
 
+}
+
+func (e *executor) SetLogger(logger Logger) {
+	e.logger = logger
 }
 
 func (e *executor) Query() Query {

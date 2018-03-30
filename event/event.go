@@ -2,34 +2,35 @@ package event
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"sync"
 )
 
 func New() Event {
 	return &event{
-		functionMap: make(map[string]interface{}),
+		functionMap: make(map[interface{}]interface{}),
 	}
 }
 
 type Event interface {
-	On(event string, task interface{}) error
-	Fire(event string, params ...interface{}) ([]reflect.Value, error)
-	FireBackground(event string, params ...interface{}) (chan []reflect.Value, error)
-	Clear(event string) error
+	On(event interface{}, task interface{}) error
+	Fire(event interface{}, params ...interface{}) ([]reflect.Value, error)
+	FireBackground(event interface{}, params ...interface{}) (chan []reflect.Value, error)
+	Clear(event interface{}) error
 	ClearEvents()
-	HasEvent(event string) bool
-	Events() []string
+	HasEvent(event interface{}) bool
+	Events() []interface{}
 	EventCount() int
 }
 
 type event struct {
-	functionMap map[string]interface{}
+	functionMap map[interface{}]interface{}
 
 	mu sync.Mutex
 }
 
-func (t *event) On(event string, task interface{}) error {
+func (t *event) On(event interface{}, task interface{}) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if _, ok := t.functionMap[event]; ok {
@@ -39,10 +40,11 @@ func (t *event) On(event string, task interface{}) error {
 		return errors.New("task is not a function")
 	}
 	t.functionMap[event] = task
+	//fmt.Println(t.functionMap)
 	return nil
 }
 
-func (t *event) Fire(event string, params ...interface{}) ([]reflect.Value, error) {
+func (t *event) Fire(event interface{}, params ...interface{}) ([]reflect.Value, error) {
 	f, in, err := t.read(event, params...)
 	if err != nil {
 		return nil, err
@@ -51,7 +53,7 @@ func (t *event) Fire(event string, params ...interface{}) ([]reflect.Value, erro
 	return result, nil
 }
 
-func (t *event) FireBackground(event string, params ...interface{}) (chan []reflect.Value, error) {
+func (t *event) FireBackground(event interface{}, params ...interface{}) (chan []reflect.Value, error) {
 	f, in, err := t.read(event, params...)
 	if err != nil {
 		return nil, err
@@ -63,7 +65,7 @@ func (t *event) FireBackground(event string, params ...interface{}) (chan []refl
 	return results, nil
 }
 
-func (t *event) Clear(event string) error {
+func (t *event) Clear(event interface{}) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if _, ok := t.functionMap[event]; !ok {
@@ -76,20 +78,20 @@ func (t *event) Clear(event string) error {
 func (t *event) ClearEvents() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	t.functionMap = make(map[string]interface{})
+	t.functionMap = make(map[interface{}]interface{})
 }
 
-func (t *event) HasEvent(event string) bool {
+func (t *event) HasEvent(event interface{}) bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	_, ok := t.functionMap[event]
 	return ok
 }
 
-func (t *event) Events() []string {
+func (t *event) Events() []interface{} {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	events := make([]string, 0)
+	events := make([]interface{}, 0)
 	for k := range t.functionMap {
 		events = append(events, k)
 	}
@@ -102,7 +104,7 @@ func (t *event) EventCount() int {
 	return len(t.functionMap)
 }
 
-func (t *event) read(event string, params ...interface{}) (reflect.Value, []reflect.Value, error) {
+func (t *event) read(event interface{}, params ...interface{}) (reflect.Value, []reflect.Value, error) {
 	t.mu.Lock()
 	task, ok := t.functionMap[event]
 	t.mu.Unlock()
@@ -112,11 +114,22 @@ func (t *event) read(event string, params ...interface{}) (reflect.Value, []refl
 	f := reflect.ValueOf(task)
 	ft := f.Type()
 	if !ft.IsVariadic() && len(params) != ft.NumIn() {
+		fmt.Println("Event Debug=======>")
+		fmt.Println(event)
+		fmt.Println(len(params))
+		fmt.Println(ft.NumIn())
+		fmt.Println(ft.IsVariadic())
+		fmt.Println("<========Event Debug End")
 		return reflect.Value{}, nil, errors.New("parameter mismatched")
 	}
 	in := make([]reflect.Value, len(params))
 	for k, param := range params {
-		in[k] = reflect.ValueOf(param)
+		field := ft.In(k)
+		fv := reflect.ValueOf(param)
+		if field != fv.Type() && (!ft.IsVariadic() || k-1 < ft.NumIn()) {
+			fv = fv.Convert(field)
+		}
+		in[k] = fv
 	}
 	return f, in, nil
 }

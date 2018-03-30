@@ -1,4 +1,4 @@
-package definition
+package def
 
 type ID interface {
 	ID() string

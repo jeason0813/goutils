@@ -6,5 +6,5 @@ type Store interface {
 }
 
 type Cache interface {
-	Store() Store
+	Store(region string) Store
 }
