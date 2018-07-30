@@ -88,31 +88,47 @@ func (q *query) Find(result interface{}) error {
 
 	var schema *Schema
 	var err error
+	if q.schema != nil {
+		schema = q.schema
+	}
+
 	switch valueE.Kind() {
 	case reflect.Struct:
 		q.Limit(0, 1)
 		one = true
-		schema, err = NewSchema(result)
-		if err != nil {
-			return err
+		if schema != nil{
+			schema, err = NewSchema(result)
+			if err != nil {
+				return err
+			}
 		}
+
 	case reflect.Slice:
-		schema, err = NewSchema(valueE.Index(0).Interface())
-		if err != nil {
-			return err
+		if schema != nil{
+			schema, err = NewSchema(valueE.Index(0).Interface())
+			if err != nil {
+				return err
+			}
 		}
-		break
+
 	default:
 		return errors.New("only type:struct or slice")
 	}
+
 	rows, err := q.selectInline()
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 	columns, err := rows.Columns()
+	if err != nil {
+		return err
+	}
 	if one {
-		rows.Next()
+		b := rows.Next()
+		if !b {
+			return errors.New("result is empty")
+		}
 		return scanInterface(q.executor, rows, schema, columns, &value)
 	} else {
 		i := 0
@@ -134,7 +150,7 @@ func (q *query) Rows() (Rows, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newRows(q.executor, rows)
+	return newRows(q.executor, q.schema, rows)
 }
 
 func (q *query) Count() (int64, error) {

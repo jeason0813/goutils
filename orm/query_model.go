@@ -128,23 +128,26 @@ func formatData(schema *Schema, records ...map[string]interface{}) ([]string, []
 	if len(records) == 0 {
 		return []string{}, [][]interface{}{}, nil
 	}
-	fieldsSlice := make([]string, len(fields))
-	originSlice := make([]string, len(fields))
+	fieldsSlice := make([]string, 0, len(fields))
+	//originSlice := make([]string, 0, len(fields))
 	for f, ff := range fields {
-		originSlice = append(originSlice, f)
+		//originSlice = append(originSlice, f)
+		if f == schema.AutoIncrement{
+			continue
+		}
 		fieldsSlice = append(fieldsSlice, ff)
 	}
-	d := make([][]interface{}, len(fieldsSlice))
-	for _, v := range records {
-		g := make([]interface{}, len(columns))
-		for _, f := range fieldsSlice {
-			c, ok := v[f]
+	d := make([][]interface{}, len(records))
+	for k, v := range records {
+		g := make([]interface{}, len(fieldsSlice))
+		for kk, field := range fieldsSlice {
+			c, ok := v[field]
 			if !ok {
-				c = columns[f].d
+				c = columns[field].d
 			}
-			g = append(g, c)
+			g[kk] = c
 		}
-		d = append(d, g)
+		d[k] = g
 	}
 	return fieldsSlice, d, nil
 }
@@ -260,15 +263,20 @@ func interface2map(schema *Schema, record interface{}) (map[string]interface{}, 
 				}
 			}
 		case reflect.Bool:
+			fallthrough
 		case reflect.String:
+			fallthrough
 		case reflect.Int8, reflect.Int16, reflect.Int, reflect.Int32, reflect.Int64:
+			fallthrough
 		case reflect.Float32, reflect.Float64:
+			fallthrough
 		case reflect.Uint8, reflect.Uint16, reflect.Uint, reflect.Uint32, reflect.Uint64:
+			fallthrough
 		default:
 			val = value.Interface()
 		}
 	APPEND:
-		data[name] = val
+		data[colName] = val
 	}
 	return data, nil
 }

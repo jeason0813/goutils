@@ -116,7 +116,7 @@ func (t *event) read(event interface{}, params ...interface{}) (reflect.Value, [
 	if !ft.IsVariadic() && len(params) != ft.NumIn() {
 		fmt.Println("Event Debug=======>")
 		fmt.Println(event)
-		fmt.Println(len(params))
+		fmt.Println(len(params), params)
 		fmt.Println(ft.NumIn())
 		fmt.Println(ft.IsVariadic())
 		fmt.Println("<========Event Debug End")

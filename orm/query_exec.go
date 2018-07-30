@@ -108,7 +108,7 @@ func (q *query) inlineInsert(fields []string, data []interface{}) (sql.Result, e
 		return nil, err
 	}
 
-	return q.exec(fmt.Sprint(s, q.table, fieldStr, valueStr), data...)
+	return q.exec(fmt.Sprintf(s, q.table, fieldStr, valueStr), data...)
 }
 
 func (q *query) inlineInsertBatch(fields []string, data ...[]interface{}) (sql.Result, error) {
@@ -130,7 +130,7 @@ func (q *query) inlineInsertBatch(fields []string, data ...[]interface{}) (sql.R
 			valueStr += ","
 		}
 	}
-	return q.exec(fmt.Sprint(s, q.table, fieldStr, valueStr), args...)
+	return q.exec(fmt.Sprintf(s, q.table, fieldStr, valueStr), args...)
 }
 
 func (q *query) inlineUpdate(fields []string, data []interface{}) (sql.Result, error) {
@@ -147,7 +147,7 @@ func (q *query) inlineUpdate(fields []string, data []interface{}) (sql.Result, e
 	if err != nil {
 		return nil, err
 	}
-	return q.exec(fmt.Sprint(s, q.table, setSql, where), append(data, args...)...)
+	return q.exec(fmt.Sprintf(s, q.table, setSql, where), append(data, args...)...)
 }
 
 func (q *query) getSet(fields []string, data []interface{}) (string, error) {
@@ -192,17 +192,17 @@ func parseMap(data ...map[string]interface{}) ([]string, [][]interface{}) {
 		return []string{}, [][]interface{}{}
 	}
 	template := data[0]
-	fields := make([]string, len(template))
+	fields := make([]string, 0, len(template))
 	for k, _ := range template {
 		fields = append(fields, k)
 	}
 	d := make([][]interface{}, len(data))
-	for _, v := range data {
+	for k, v := range data {
 		g := make([]interface{}, len(fields))
-		for _, vv := range v {
-			g = append(g, vv)
+		for kk, field := range fields {
+			g[kk] = v[field]
 		}
-		d = append(d, g)
+		d[k] = g
 	}
 	return fields, d
 }

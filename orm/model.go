@@ -47,7 +47,7 @@ func (m *Model) bind(query *query) *query {
 
 	auto := m.schema.AutoIncrement
 	if auto != "" {
-		query.Id(auto)
+		query.Id(m.schema.fields[auto])
 	}
 	return query
 }
@@ -62,7 +62,7 @@ func (m *Model) PK(key ...interface{}) ModelQuery {
 		return query.error(errors.New("Model do not have primary"))
 	}
 	for k, v := range m.schema.Primary {
-		query.Where(v, "=", key[k])
+		query.Where(m.schema.fields[v], "=", key[k])
 	}
 	return m.bind(query)
 }

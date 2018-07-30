@@ -53,6 +53,16 @@ var (
 	TimeType = reflect.TypeOf(c_TIME_DEFAULT)
 )
 
+func ToByte(object interface{}) byte {
+	v := To(reflect.ValueOf(object), ByteType)
+	return v.Interface().(byte)
+}
+
+func ToBytes(object interface{}) []byte {
+	v := To(reflect.ValueOf(object), BytesType)
+	return v.Interface().([]byte)
+}
+
 func ToInt(object interface{}) int {
 	v := To(reflect.ValueOf(object), IntType)
 	return v.Interface().(int)
@@ -71,6 +81,11 @@ func ToUint8(object interface{}) uint8 {
 func ToString(object interface{}) string {
 	v := To(reflect.ValueOf(object), StringType)
 	return v.Interface().(string)
+}
+
+func ToBool(object interface{}) bool {
+	v := To(reflect.ValueOf(object), BoolType)
+	return v.Interface().(bool)
 }
 
 func To(value reflect.Value, p reflect.Type) reflect.Value {

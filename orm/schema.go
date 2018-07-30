@@ -62,19 +62,6 @@ func (s *Schema) With(record interface{}) error {
 	for k := 0; k < t.NumField(); k++ {
 		col := t.Field(k)
 		tag := col.Tag
-		key := tag.Get("orm")
-		switch key {
-		case "auto":
-			s.SetAutoIncrement(col.Name)
-		case "primary":
-			s.SetPrimary(col.Name)
-		case "deleteTime":
-			s.SoftDelete(col.Name)
-		case "createTime":
-			s.SetCreateTime(col.Name)
-		case "updateTime":
-			s.SetUpdateTime(col.Name)
-		}
 		v := valueE.FieldByName(col.Name)
 		d := v.Interface()
 		_, required := tag.Lookup("required")
@@ -111,6 +98,19 @@ func (s *Schema) With(record interface{}) error {
 			}
 		}
 		s.columns[s.fields[col.Name]] = c
+		key := tag.Get("orm")
+		switch key {
+		case "auto":
+			s.SetAutoIncrement(col.Name)
+		case "primary":
+			s.SetPrimary(col.Name)
+		case "deleteTime":
+			s.SoftDelete(col.Name)
+		case "createTime":
+			s.SetCreateTime(col.Name)
+		case "updateTime":
+			s.SetUpdateTime(col.Name)
+		}
 	}
 	s.record = record
 	s.schemaType = t
@@ -129,10 +129,6 @@ func (s *Schema) SetPrimary(primary ...string) *Schema {
 	return s
 }
 
-func (s *Schema) SetTimeStamps() *Schema {
-	return s.SetTime("createTime", "updateTime", "deleteTime")
-}
-
 func (s *Schema) SetTime(createTime string, updateTime string, deleteTime string) *Schema {
 	s.SetCreateTime(createTime)
 	s.SetUpdateTime(updateTime)
@@ -141,49 +137,51 @@ func (s *Schema) SetTime(createTime string, updateTime string, deleteTime string
 }
 
 func (s *Schema) SetCreateTime(createTime string) *Schema {
-	if createTime != "" {
-		createTime = "createTime"
+	if createTime == "" {
+		createTime = "CreateTime"
 	}
 	s.createTime = createTime
-	s.columns[createTime].sql = "dateTime"
+	s.columns[s.fields[createTime]].sql = "dateTime"
 	return s
 }
 
 func (s *Schema) SetUpdateTime(updateTime string) *Schema {
-	if updateTime != "" {
-		updateTime = "updateTime"
+	if updateTime == "" {
+		updateTime = "UpdateTime"
 	}
 	s.updateTime = updateTime
-	s.columns[updateTime].sql = "dateTime"
+	s.columns[s.fields[updateTime]].sql = "dateTime"
 	return s
 }
 
 func (s *Schema) SoftDelete(deleteTime string) *Schema {
-	if deleteTime != "" {
-		deleteTime = "deleteTime"
+	if deleteTime == "" {
+		deleteTime = "DeleteTime"
 	}
 	s.softDelete = true
 	s.deleteTime = deleteTime
-	s.columns[deleteTime].sql = "dateTime"
+	s.columns[s.fields[deleteTime]].sql = "dateTime"
 	return s
 }
 
 func (s *Schema) Set(record interface{}, field string, v interface{}) error {
 	value := reflect.ValueOf(record)
-	if value.Kind() != reflect.Ptr || value.Elem().Kind() != reflect.Struct {
+	elem := value.Elem()
+	if value.Kind() != reflect.Ptr || elem.Kind() != reflect.Struct {
 		return errors.New("needs a Struct pointer")
 	}
-	fieldValue := value.Elem().FieldByName(field)
+	fieldValue := elem.FieldByName(field)
 	fieldValue.Set(reflect.ValueOf(v))
 	return nil
 }
 
 func (s *Schema) Get(record interface{}, field string) (interface{}, error) {
 	value := reflect.ValueOf(record)
-	if value.Kind() != reflect.Ptr || value.Elem().Kind() != reflect.Struct {
+	elem := value.Elem()
+	if value.Kind() != reflect.Ptr || elem.Kind() != reflect.Struct {
 		return nil, errors.New("needs a Struct pointer")
 	}
-	fieldValue := value.Elem().FieldByName(field)
+	fieldValue := elem.FieldByName(field)
 	return fieldValue.Interface(), nil
 }
 

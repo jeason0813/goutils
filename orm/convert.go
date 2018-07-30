@@ -2,6 +2,7 @@ package orm
 
 import (
 	"database/sql/driver"
+	"database/sql"
 	"errors"
 	"fmt"
 	"reflect"
@@ -111,8 +112,13 @@ func convertAssign(dest, src interface{}) error {
 			}
 			*d = cloneBytes(s)
 			return nil
+		case *RawBytes:
+			if d == nil {
+				return errNilPtr
+			}
+			*d = s
+			return nil
 		}
-
 	case time.Time:
 		switch d := dest.(type) {
 		case *string:
@@ -134,6 +140,12 @@ func convertAssign(dest, src interface{}) error {
 			*d = nil
 			return nil
 		case *[]byte:
+			if d == nil {
+				return errNilPtr
+			}
+			*d = nil
+			return nil
+		case *RawBytes:
 			if d == nil {
 				return errNilPtr
 			}
@@ -161,6 +173,12 @@ func convertAssign(dest, src interface{}) error {
 			*d = b
 			return nil
 		}
+	case *RawBytes:
+		sv = reflect.ValueOf(src)
+		if b, ok := asBytes([]byte(*d)[:0], sv); ok {
+			*d = RawBytes(b)
+			return nil
+		}
 	case *bool:
 		bv, err := driver.Bool.ConvertValue(src)
 		if err == nil {
@@ -170,6 +188,10 @@ func convertAssign(dest, src interface{}) error {
 	case *interface{}:
 		*d = src
 		return nil
+	}
+
+	if scanner, ok := dest.(sql.Scanner); ok {
+		return scanner.Scan(src)
 	}
 
 	dpv := reflect.ValueOf(dest)
@@ -200,15 +222,20 @@ func convertAssign(dest, src interface{}) error {
 		return nil
 	}
 
+	// The following conversions use a string value as an intermediate representation
+	// to convert between various numeric types.
+	//
+	// This also allows scanning into user defined types such as "type Int int64".
+	// For symmetry, also check for string destination types.
 	switch dv.Kind() {
 	case reflect.Ptr:
 		if src == nil {
 			dv.Set(reflect.Zero(dv.Type()))
 			return nil
+		} else {
+			dv.Set(reflect.New(dv.Type().Elem()))
+			return convertAssign(dv.Interface(), src)
 		}
-
-		dv.Set(reflect.New(dv.Type().Elem()))
-		return convertAssign(dv.Interface(), src)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		s := asString(src)
 		i64, err := strconv.ParseInt(s, 10, dv.Type().Bits())
@@ -237,8 +264,14 @@ func convertAssign(dest, src interface{}) error {
 		dv.SetFloat(f64)
 		return nil
 	case reflect.String:
-		dv.SetString(asString(src))
-		return nil
+		switch v := src.(type) {
+		case string:
+			dv.SetString(v)
+			return nil
+		case []byte:
+			dv.SetString(string(v))
+			return nil
+		}
 	}
 
 	return fmt.Errorf("unsupported Scan, storing driver.Value type %T into type %T", src, dest)
@@ -278,7 +311,7 @@ func asKind(vv reflect.Value, tp reflect.Type) (interface{}, error) {
 		}
 
 	}
-	return nil, fmt.Errorf("unsupported primary key type: %v, %v", tp, vv)
+	return nil, fmt.Errorf("unsupported primary key type: %#v, %#v", tp, vv)
 }
 
 func convertFloat(v interface{}) (float64, error) {
