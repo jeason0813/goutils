@@ -10,6 +10,7 @@ import (
 func New() Event {
 	return &event{
 		functionMap: make(map[interface{}]interface{}),
+		mu: sync.RWMutex{},
 	}
 }
 
@@ -27,7 +28,7 @@ type Event interface {
 type event struct {
 	functionMap map[interface{}]interface{}
 
-	mu sync.Mutex
+	mu sync.RWMutex
 }
 
 func (t *event) On(event interface{}, task interface{}) error {
@@ -82,15 +83,15 @@ func (t *event) ClearEvents() {
 }
 
 func (t *event) HasEvent(event interface{}) bool {
-	t.mu.Lock()
-	defer t.mu.Unlock()
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	_, ok := t.functionMap[event]
 	return ok
 }
 
 func (t *event) Events() []interface{} {
-	t.mu.Lock()
-	defer t.mu.Unlock()
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	events := make([]interface{}, 0)
 	for k := range t.functionMap {
 		events = append(events, k)
@@ -99,15 +100,15 @@ func (t *event) Events() []interface{} {
 }
 
 func (t *event) EventCount() int {
-	t.mu.Lock()
-	defer t.mu.Unlock()
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	return len(t.functionMap)
 }
 
 func (t *event) read(event interface{}, params ...interface{}) (reflect.Value, []reflect.Value, error) {
-	t.mu.Lock()
+	t.mu.RLock()
 	task, ok := t.functionMap[event]
-	t.mu.Unlock()
+	t.mu.RUnlock()
 	if !ok {
 		return reflect.Value{}, nil, errors.New("no task found for event")
 	}

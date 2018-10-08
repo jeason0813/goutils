@@ -35,13 +35,13 @@ func (set *signalSet) handle(sig os.Signal, arg interface{}) (err error) {
 	panic("won't reach here")
 }
 
-func Handle(closeHandler signalHandler) {
+func CloseHandler(handler signalHandler) {
 	ss := signalSetNew()
 
-	ss.register(syscall.SIGINT, closeHandler)
-	ss.register(syscall.SIGHUP, closeHandler)
-	ss.register(syscall.SIGQUIT, closeHandler)
-	ss.register(syscall.SIGTERM, closeHandler)
+	ss.register(syscall.SIGINT, handler)
+	ss.register(syscall.SIGHUP, handler)
+	ss.register(syscall.SIGQUIT, handler)
+	ss.register(syscall.SIGTERM, handler)
 
 	for {
 		c := make(chan os.Signal)

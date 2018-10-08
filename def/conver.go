@@ -3,6 +3,7 @@ package def
 import (
 	"reflect"
 	"time"
+	"unsafe"
 )
 
 var (
@@ -94,4 +95,14 @@ func To(value reflect.Value, p reflect.Type) reflect.Value {
 	} else {
 		return value
 	}
+}
+
+func str2bytes(s string) []byte {
+	x := (*[2]uintptr)(unsafe.Pointer(&s))
+	h := [3]uintptr{x[0], x[1], x[1]}
+	return *(*[]byte)(unsafe.Pointer(&h))
+}
+
+func bytes2str(b []byte) string {
+	return *(*string)(unsafe.Pointer(&b))
 }
