@@ -63,6 +63,9 @@ func (s *Schema) With(record interface{}) error {
 		col := t.Field(k)
 		tag := col.Tag
 		v := valueE.FieldByName(col.Name)
+		if !v.CanInterface() {
+			continue
+		}
 		d := v.Interface()
 		_, required := tag.Lookup("required")
 		t, tset := tag.Lookup("time")
