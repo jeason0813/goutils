@@ -104,6 +104,10 @@ func (m *Model) Rows(query Query) (Rows, error) {
 	return rows, nil
 }
 
+func (m *Model) Insert(record interface{})(int64, error){
+	return m.Query().Save(record)
+}
+
 func (m *Model) Update(query Query, record interface{}) (int64, error) {
 	if m.schema.softDelete {
 		query.Where(m.schema.deleteTime, "=", 0)
