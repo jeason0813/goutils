@@ -55,36 +55,108 @@ var (
 )
 
 func ToByte(object interface{}) byte {
+	switch object.(type){
+	case byte:
+		return object.(byte)
+	case []byte:
+		return object.([]byte)[0]
+	}
 	v := To(reflect.ValueOf(object), ByteType)
 	return v.Interface().(byte)
 }
 
 func ToBytes(object interface{}) []byte {
+	switch object.(type){
+	case []byte:
+		return object.([]byte)
+	case string:
+		return str2bytes(object.(string))
+	}
 	v := To(reflect.ValueOf(object), BytesType)
 	return v.Interface().([]byte)
 }
 
 func ToInt(object interface{}) int {
+	switch object.(type){
+	case int:
+		return object.(int)
+	case uint:
+		return int(object.(uint))
+	case uint8:
+		return int(object.(uint8))
+	case uint16:
+		return int(object.(uint16))
+	case uint32:
+		return int(object.(uint32))
+	case uint64:
+		return int(object.(uint64))
+	}
 	v := To(reflect.ValueOf(object), IntType)
 	return v.Interface().(int)
 }
 
 func ToUint(object interface{}) uint {
+	switch object.(type){
+	case uint:
+		return object.(uint)
+	case uint8:
+		return uint(object.(uint8))
+	case uint16:
+		return uint(object.(uint16))
+	case uint32:
+		return uint(object.(uint32))
+	case uint64:
+		return uint(object.(uint64))
+	}
 	v := To(reflect.ValueOf(object), UintType)
 	return v.Interface().(uint)
 }
 
 func ToUint8(object interface{}) uint8 {
+	switch object.(type){
+	case uint8:
+		return object.(uint8)
+	case uint:
+		return uint8(object.(uint))
+	case uint16:
+		return uint8(object.(uint16))
+	case uint32:
+		return uint8(object.(uint32))
+	case uint64:
+		return uint8(object.(uint64))
+	}
 	v := To(reflect.ValueOf(object), Uint8Type)
 	return v.Interface().(uint8)
 }
 
 func ToString(object interface{}) string {
+	switch object.(type){
+	case string:
+		return object.(string)
+	case []byte:
+		return bytes2str(object.([]byte))
+	}
 	v := To(reflect.ValueOf(object), StringType)
 	return v.Interface().(string)
 }
 
 func ToBool(object interface{}) bool {
+	switch object.(type){
+	case bool:
+		return object.(bool)
+	case uint8:
+		if object.(uint8) > 0{
+			return true
+		}else{
+			return false
+		}
+	case uint:
+		if object.(uint) > 0{
+			return true
+		}else{
+			return false
+		}
+	}
 	v := To(reflect.ValueOf(object), BoolType)
 	return v.Interface().(bool)
 }
