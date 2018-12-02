@@ -83,8 +83,7 @@ func (q *query) Find(result interface{}) error {
 		return errors.New("a pointer to a pointer is not allowed")
 	}
 	one := false
-	value := reflect.ValueOf(result)
-	valueE := value.Elem()
+	valueE := beanValue.Elem()
 
 	var schema *Schema
 	var err error
@@ -96,7 +95,7 @@ func (q *query) Find(result interface{}) error {
 	case reflect.Struct:
 		q.Limit(0, 1)
 		one = true
-		if schema != nil{
+		if schema != nil {
 			schema, err = NewSchema(result)
 			if err != nil {
 				return err
@@ -104,7 +103,7 @@ func (q *query) Find(result interface{}) error {
 		}
 
 	case reflect.Slice:
-		if schema != nil{
+		if schema != nil {
 			schema, err = NewSchema(valueE.Index(0).Interface())
 			if err != nil {
 				return err
@@ -129,7 +128,7 @@ func (q *query) Find(result interface{}) error {
 		if !b {
 			return errors.New("result is empty")
 		}
-		return scanInterface(q.executor, rows, schema, columns, &value)
+		return scanInterface(q.executor, rows, schema, columns, &beanValue)
 	} else {
 		i := 0
 		for rows.Next() {

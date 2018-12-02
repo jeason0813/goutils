@@ -18,7 +18,7 @@ type task struct {
 func New() Event {
 	return &event{
 		taskMap: make(map[interface{}]*task),
-		mu: sync.RWMutex{},
+		mu:      sync.RWMutex{},
 	}
 }
 
@@ -52,7 +52,7 @@ func (e *event) On(event interface{}, f interface{}) error {
 	}
 	n := t.NumIn()
 	p := make([]reflect.Type, n)
-	for k, _:=range p{
+	for k, _ := range p {
 		p[k] = t.In(k)
 	}
 	e.taskMap[event] = &task{
@@ -149,7 +149,7 @@ func (e *event) read(event interface{}, params ...interface{}) (reflect.Value, [
 	for k, _ := range params {
 		field := task.p[k]
 		fv := reflect.ValueOf(params[k])
-		if field != fv.Type() && (!variadic || k - 1 < task.n) {
+		if field != fv.Type() && (!variadic || k-1 < task.n) {
 			fv = fv.Convert(field)
 		}
 		in[k] = fv

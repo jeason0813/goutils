@@ -1,7 +1,9 @@
 package def
+
 import (
 	"sort"
 )
+
 type ID interface {
 	ID() string
 }
@@ -12,6 +14,7 @@ type Member interface {
 }
 
 type MemberSlice []Member
+
 func (p MemberSlice) Len() int           { return len(p) }
 func (p MemberSlice) Less(i, j int) bool { return p[i].ID() < p[j].ID() }
 func (p MemberSlice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
@@ -22,7 +25,15 @@ func (l MemberSlice) Append(t Member) MemberSlice {
 	return ll
 }
 func (l MemberSlice) Remove(index int) MemberSlice {
-	ll := append(l[:index-1], l[index+1:]...)
+	var ll MemberSlice
+	switch index {
+	case 0:
+		ll = l[1:]
+	case len(l) - 1:
+		ll = l[0 : len(l)-2]
+	default:
+		ll = append(l[:index-1], l[index+1:]...)
+	}
 	ll.Sort()
 	return ll
 }
@@ -32,7 +43,12 @@ func (l MemberSlice) Search(t Member) int {
 }
 
 func (l MemberSlice) SearchID(t string) int {
-	return sort.Search(l.Len(), func(i int) bool { return l[i].ID() >= t })
+	index := sort.Search(l.Len(), func(i int) bool { return l[i].ID() >= t })
+	if index < l.Len() && l[index].ID() == t {
+		return index
+	} else {
+		return -1
+	}
 }
 
 type Component interface {
@@ -43,6 +59,7 @@ type Component interface {
 }
 
 type ComponentSlice []Component
+
 func (p ComponentSlice) Len() int           { return len(p) }
 func (p ComponentSlice) Less(i, j int) bool { return p[i].ID() < p[j].ID() }
 func (p ComponentSlice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
@@ -53,7 +70,15 @@ func (l ComponentSlice) Append(t Component) ComponentSlice {
 	return ll
 }
 func (l ComponentSlice) Remove(index int) ComponentSlice {
-	ll := append(l[:index-1], l[index+1:]...)
+	var ll ComponentSlice
+	switch index {
+	case 0:
+		ll = l[1:]
+	case len(l) - 1:
+		ll = l[0 : len(l)-2]
+	default:
+		ll = append(l[:index-1], l[index+1:]...)
+	}
 	ll.Sort()
 	return ll
 }
@@ -63,6 +88,10 @@ func (l ComponentSlice) Search(t Component) int {
 }
 
 func (l ComponentSlice) SearchID(t string) int {
-	return sort.Search(l.Len(), func(i int) bool { return l[i].ID() >= t })
+	index := sort.Search(l.Len(), func(i int) bool { return l[i].ID() >= t })
+	if index < l.Len() && l[index].ID() == t {
+		return index
+	} else {
+		return -1
+	}
 }
-

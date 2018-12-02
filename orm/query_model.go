@@ -28,8 +28,9 @@ func (q *query) Get() (interface{}, error) {
 		return nil, errors.New("model is nil")
 	}
 	q.Limit(0, 1)
+	schema := q.model.schema
 
-	value := reflect.New(q.model.schema.schemaType)
+	value := reflect.New(schema.schemaType)
 
 	rows, err := q.selectInline()
 	if err != nil {
@@ -53,12 +54,12 @@ func (q *query) SoftDelete() (int64, error) {
 	if q.model == nil {
 		return 0, errors.New("model is nil")
 	}
-
-	if !q.model.schema.softDelete {
+	schema := q.model.schema
+	if !schema.softDelete {
 		return 0, errors.New("schema not have soft delete")
 	}
 	data := make(map[string]interface{})
-	data[q.model.schema.deleteTime] = time.UTC
+	data[schema.deleteTime] = time.UTC
 	return q.Update(data)
 }
 
@@ -67,12 +68,13 @@ func (q *query) Recovery() (int64, error) {
 	if q.model == nil {
 		return 0, errors.New("model is nil")
 	}
-	if !q.model.schema.softDelete {
+	schema := q.model.schema
+	if !schema.softDelete {
 		return 0, errors.New("schema not have soft delete")
 	}
 
 	data := make(map[string]interface{})
-	data[q.model.schema.deleteTime] = 0
+	data[schema.deleteTime] = 0
 	return q.Update(data)
 }
 
@@ -80,19 +82,20 @@ func (q *query) Save(record interface{}) (int64, error) {
 	if q.model == nil {
 		return 0, errors.New("model is nil")
 	}
-	primary := q.model.schema.Primary
+	schema := q.model.schema
+	primary := schema.Primary
 	if primary == nil {
 		return 0, errors.New("Model do not have primary")
 	}
-	auto := q.model.schema.AutoIncrement
+	auto := schema.AutoIncrement
 	if auto == "" {
 		return 0, errors.New("Model do not have autoincrement")
 	}
-	value, err := q.model.schema.Get(record, auto)
+	value, err := schema.Get(record, auto)
 	if err != nil {
 		return 0, err
 	}
-	data, err := interface2map(q.model.schema, record)
+	data, err := interface2map(schema, record)
 	if err != nil {
 		return 0, err
 	}
@@ -101,7 +104,7 @@ func (q *query) Save(record interface{}) (int64, error) {
 		if err != nil {
 			return 0, err
 		}
-		q.model.schema.Set(record, auto, result)
+		schema.Set(record, auto, result)
 		return result, err
 	} else {
 		return q.Update(data)
@@ -132,7 +135,7 @@ func formatData(schema *Schema, records ...map[string]interface{}) ([]string, []
 	//originSlice := make([]string, 0, len(fields))
 	for f, ff := range fields {
 		//originSlice = append(originSlice, f)
-		if f == schema.AutoIncrement{
+		if f == schema.AutoIncrement {
 			continue
 		}
 		fieldsSlice = append(fieldsSlice, ff)

@@ -55,7 +55,10 @@ var (
 )
 
 func ToByte(object interface{}) byte {
-	switch object.(type){
+	if object == nil {
+		return byte(0)
+	}
+	switch object.(type) {
 	case byte:
 		return object.(byte)
 	case []byte:
@@ -66,7 +69,10 @@ func ToByte(object interface{}) byte {
 }
 
 func ToBytes(object interface{}) []byte {
-	switch object.(type){
+	if object == nil {
+		return []byte("")
+	}
+	switch object.(type) {
 	case []byte:
 		return object.([]byte)
 	case string:
@@ -77,7 +83,10 @@ func ToBytes(object interface{}) []byte {
 }
 
 func ToInt(object interface{}) int {
-	switch object.(type){
+	if object == nil {
+		return int(0)
+	}
+	switch object.(type) {
 	case int:
 		return object.(int)
 	case uint:
@@ -96,7 +105,10 @@ func ToInt(object interface{}) int {
 }
 
 func ToUint(object interface{}) uint {
-	switch object.(type){
+	if object == nil {
+		return uint(0)
+	}
+	switch object.(type) {
 	case uint:
 		return object.(uint)
 	case uint8:
@@ -113,7 +125,10 @@ func ToUint(object interface{}) uint {
 }
 
 func ToUint8(object interface{}) uint8 {
-	switch object.(type){
+	if object == nil {
+		return uint8(0)
+	}
+	switch object.(type) {
 	case uint8:
 		return object.(uint8)
 	case uint:
@@ -130,7 +145,10 @@ func ToUint8(object interface{}) uint8 {
 }
 
 func ToString(object interface{}) string {
-	switch object.(type){
+	if object == nil {
+		return ""
+	}
+	switch object.(type) {
 	case string:
 		return object.(string)
 	case []byte:
@@ -141,19 +159,22 @@ func ToString(object interface{}) string {
 }
 
 func ToBool(object interface{}) bool {
-	switch object.(type){
+	if object == nil {
+		return false
+	}
+	switch object.(type) {
 	case bool:
 		return object.(bool)
 	case uint8:
-		if object.(uint8) > 0{
+		if object.(uint8) > 0 {
 			return true
-		}else{
+		} else {
 			return false
 		}
 	case uint:
-		if object.(uint) > 0{
+		if object.(uint) > 0 {
 			return true
-		}else{
+		} else {
 			return false
 		}
 	}

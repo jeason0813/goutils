@@ -174,7 +174,11 @@ func (s *Schema) Set(record interface{}, field string, v interface{}) error {
 		return errors.New("needs a Struct pointer")
 	}
 	fieldValue := elem.FieldByName(field)
-	fieldValue.Set(reflect.ValueOf(v))
+	vv := reflect.ValueOf(v)
+	if fieldValue.Type() != vv.Type() {
+		vv = vv.Convert(fieldValue.Type())
+	}
+	fieldValue.Set(vv)
 	return nil
 }
 
